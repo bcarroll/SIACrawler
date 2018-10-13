@@ -1,7 +1,12 @@
 # SIACrawler
 Automatically create a CA Certificate bundle file from a Trust Anchor CA certificate by walking the Subject Information Access information in the Trust Root CA Certificate and all subordinate CAs under it.
 
- Dependencies required to execute this script:
+# Quick Start
+`perl SIACrawler.pl`
+
+Using the default configuration, this script will create a ca_bundle.pem file in the directory the script is executed from, containing all Certificate Authority certificates that have been issued under the Federal Common Policy Root CA.  The resulting file can be used with any webserver software that supports a single text file containing a concatenated list of trusted CA certificates (Apache httpd).
+
+Dependencies required to execute this script:
  * Network access to the Internet (http_proxy/https_proxy environment variables will be used if defined)
  * OpenSSL (https://www.openssl.org/)
  * Perl Interpreter (https://www.perl.org/)

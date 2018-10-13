@@ -1,5 +1,7 @@
 # SIACrawler
-Automatically create a CA Certificate bundle file from a Trust Anchor CA certificate by walking the Subject Information Access information in the Trust Root CA Certificate and all subordinate CAs under it.
+*(AIACrawler is a similar but unrelated utility)*
+
+Automatically create a CA Certificate bundle file from a Trust Anchor CA certificate by extracting the Authority Information Access (AIA) Certificate Repository URI from the Subject Information Access (SIA) information in the Trust Root CA Certificate and all subordinate CAs under it.
 
 # Quick Start
 `perl SIACrawler.pl`

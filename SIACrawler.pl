@@ -72,7 +72,7 @@ our $VERSION = '0.0.1';
 ###############################################################################
 
 # Set $DEBUG to 1 to print verbose execution messages to STDOUT
-my $DEBUG = 1;
+my $DEBUG = 0;
 
 # Specify the filepath to write the created CA Trust Chain bundle to
 my $CATrustChainBundleFile = "./ca_bundle.pem";

@@ -51,8 +51,7 @@ our $VERSION = '0.0.1';
 #      - The certificate is not a self-signed certificate
 #      - The certificate does not have the same Subject Key Identifier as the Trust Root CA
 #        (not a Cross Certified CA Certificate)
-#      - The certificate contains the "Common Authentication" Certificate Policy OID
-#        (The "Common Authentication" Policy OID can be changed in the $oid hash table if needed)
+#      - The certificate contains the "REQUIRED_OID" Certificate Policy OID specified in the $oid hash
 #      - The certificate's subject does not contain any of the strings specified
 #        in the @certsToExcludeFromBundle array variable
 #
@@ -73,7 +72,7 @@ our $VERSION = '0.0.1';
 ###############################################################################
 
 # Set $DEBUG to 1 to print verbose execution messages to STDOUT
-my $DEBUG = 0;
+my $DEBUG = 1;
 
 # Specify the filepath to write the created CA Trust Chain bundle to
 my $CATrustChainBundleFile = "./ca_bundle.pem";
@@ -101,7 +100,7 @@ my $tmpdir = "USE_SYSTEM_TEMP";
 # X.509 Certificate Extension OID definitions
 my $oid = {
     'Subject Information Access'       => '1.3.6.1.5.5.7.1.11',
-    'Common Authentication'            => '2.16.840.1.101.3.2.1.3.13', # id-fpki-common-authentication
+    'REQUIRED_OID'                     => '2.16.840.1.101.3.2.1.3.13', # id-fpki-common-authentication
     'Certificate Authority Repository' => '1.3.6.1.5.5.7.48.5',
     'Certificate Authority Issuers'    => '1.3.6.1.5.5.7.48.2',
     'Certificate Policy'               => '2.5.29.32',
@@ -157,7 +156,7 @@ sub help {
 #Get the Trust Root CA certificate from the local filesystem (if a filepath is provided)
 # or from the network (using LWP) if a URL is provided, and start SIA crawling
 sub startCrawling {
-    showHeader();
+    showHeader() unless shift;
     print "\t* startCrawling()\n" if $DEBUG;
     if ( isURL($trustRootCAcert) ){
         print ("Downloading TrustRootCA certificate from $trustRootCAcert\n") if $DEBUG;
@@ -336,9 +335,9 @@ sub parseCert {
             return();
         }
 
-        # Skip processing certificates that don't have the Common Authentication extension
+        # Skip processing certificates that don't have the extension specified in $oid->{'REQUIRED_OID'}
         if ( hasCommonAuthPolicy($x509) ) {
-            print "\t* Common Authentication Policy defined\n" if $DEBUG;
+            print "\t* ", $oid->{'REQUIRED_OID'}, " defined\n" if $DEBUG;
             my $subjectDn = joinX509Subject($x509); # get current cert's subject
             for my $excludedCertData ( @certsToExcludeFromBundle ){
                 if (  $subjectDn =~ /$excludedCertData/ ){
@@ -366,8 +365,8 @@ sub parseExtensions {
         if ( $extension->{'extnID'} eq $oid->{'Subject Information Access'} ){
             print "\t* Found Subject Information Access extension\n" if $DEBUG;
             $extensionInfo->{'sia'} = parseSIAuri($extension);
-        } elsif ( $extension->{'extnID'} eq $oid->{'Common Authentication'} ){
-            print "\t* Found Common Authentication extension\n" if $DEBUG;
+        } elsif ( $extension->{'extnID'} eq $oid->{'REQUIRED_OID'} ){
+            print "\t* Found ", $oid->{'REQUIRED_OID'}, " extension\n" if $DEBUG;
             $extensionInfo->{'commonAuth'} = 1;
         }
     }
@@ -493,7 +492,7 @@ sub hasCommonAuthPolicy {
             my @policies = Crypt::X509::_init('CertificatePolicies')->decode( $extension->{'extnValue'} ); # decode the value
             for my $policyArrayRef ( @policies ) {
                 for my $policy ( @{$policyArrayRef} ) {
-                    if ( $policy->{'policyIdentifier'} eq $oid->{'Common Authentication'} ){
+                    if ( $policy->{'policyIdentifier'} eq $oid->{'REQUIRED_OID'} ){
                         return(1);
                     }
                 }

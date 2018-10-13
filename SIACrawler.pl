@@ -276,7 +276,7 @@ sub renameTempFile{
             $newfile = canonpath("$tmpdir/$subject-$i--$issuer.cer");
         }
         move($file, $newfile);
-        print "Renamed $file to $newfile\n" if $DEBUG;
+        print "\t* Renamed $file to $newfile\n" if $DEBUG;
         $file = $newfile;
     }
     return($file);
@@ -350,7 +350,7 @@ sub parseCert {
             if ($extensionData->{'sia'}){
                 lwpget( $extensionData->{'sia'} );
             } else {
-                print "Unable to locate Subject Information Access URI for ", joinX509Subject($x509), "\n" if $DEBUG;
+                print "\t* Unable to locate Subject Information Access URI for ", joinX509Subject($x509), "\n" if $DEBUG;
             }
         }
     }

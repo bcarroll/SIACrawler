@@ -9,6 +9,7 @@ use File::Spec::Functions qw(canonpath); # platform independent paths
 use Crypt::X509;
 use MIME::Base64;
 our $VERSION = '0.0.1';
+
 ###############################################################################
 # This script can be used to automatically create a ca_bundle file containing
 # all of the CA certificates in a trust chain (up to the Trust Root Anchor)
@@ -35,9 +36,9 @@ our $VERSION = '0.0.1';
 # This script will obtain the certificate specified in $trustRootCAcert variable
 # either through the filesystem or by downloading from the Internet.
 #
-# The Subject Information Access (SIA) field of the Trust Root CA certificate is used
-# to obtain the location of a PKCS7 (.p7c or .p7b) file containing all the CA Certs
-# that have been issued by the Trust Root CA.
+# The Authority Information Access (AIA) field contained in the Subject Information Access (SIA)
+# field of the Trust Root CA certificate is used to obtain the location of a PKCS7 (.p7c/.p7b)
+# file containing all the CA Certs that have been issued by the Trust Root CA.
 #
 #  Tasks performed by this script:
 #  1 - The PKCS7 file is downloaded from the http URI specified in the SIA field of the certificate
@@ -57,7 +58,8 @@ our $VERSION = '0.0.1';
 #
 #  4 - If the certificate meets the validation requirements the certificate is added
 #      to a temporary file (which will become the ca_bundle file)
-#  5 - Using the SIA field of this certificate, Task #1 is repeated
+#
+#  5 - Using the AIA Certificate Repository data in the SIA field of this certificate, Task #1 is repeated
 #
 #  After all certificates have been processed the temporary ca_bundle file is copied
 #  to the file specified in the $CATrustChainBundleFile variable
@@ -162,7 +164,11 @@ sub startCrawling {
         lwpget($trustRootCAcert);
     } else {
         print ("Using TrustRootCA certificate from $trustRootCAcert\n") if $DEBUG;
-        lwpget("file://" . $trustRootCAcert);
+        if (-f $trustRootCAcert){
+            fsget($trustRootCAcert);
+        } else {
+            print ("Error:  $trustRootCAcert does not seem to exist...\n");
+        }
     }
 }
 
@@ -176,6 +182,16 @@ sub isURL {
         return(0);
     } else {
         die("IOException: File not found: $data\n");
+    }
+}
+
+sub fsget {
+    my $filename = shift;
+    print "\t* fsget($filename)\n" if $DEBUG;
+    if (-f $filename && -r $filename){
+        parseDownloadedFile($filename);
+    } else {
+        print ("ERROR: Unable to open $filename for reading\n");
     }
 }
 

@@ -336,7 +336,7 @@ sub parseCert {
         }
 
         # Skip processing certificates that don't have the extension specified in $oid->{'REQUIRED_OID'}
-        if ( hasCommonAuthPolicy($x509) ) {
+        if ( hasRequiredPolicy($x509) ) {
             print "\t* ", $oid->{'REQUIRED_OID'}, " defined\n" if $DEBUG;
             my $subjectDn = joinX509Subject($x509); # get current cert's subject
             for my $excludedCertData ( @certsToExcludeFromBundle ){
@@ -480,7 +480,7 @@ sub parseSIAuri{
     return(undef);
 }
 
-sub hasCommonAuthPolicy {
+sub hasRequiredPolicy {
     my $x509 = shift;
     my $extension;
     my $CertPolicies = [];

@@ -8,7 +8,7 @@ use File::Spec qw(tmpdir); # get OS temp directory
 use File::Spec::Functions qw(canonpath); # platform independent paths
 use Crypt::X509;
 use MIME::Base64;
-our $VERSION = '0.0.1';
+our $VERSION = '0.0.9';
 
 ###############################################################################
 # This script can be used to automatically create a ca_bundle file containing
@@ -51,7 +51,7 @@ our $VERSION = '0.0.1';
 #      - The certificate is not a self-signed certificate
 #      - The certificate does not have the same Subject Key Identifier as the Trust Root CA
 #        (not a Cross Certified CA Certificate)
-#      - The certificate contains the "REQUIRED_OID" Certificate Policy OID specified in the $oid hash
+#      - The certificate contains one of the "REQUIRED_OID" Certificate Policy OIDs specified in the $oid->REQUIRED_OID array
 #      - The certificate's subject does not contain any of the strings specified
 #        in the @certsToExcludeFromBundle array variable
 #
@@ -100,7 +100,13 @@ my $tmpdir = "USE_SYSTEM_TEMP";
 # X.509 Certificate Extension OID definitions
 my $oid = {
     'Subject Information Access'       => '1.3.6.1.5.5.7.1.11',
-    'REQUIRED_OID'                     => '2.16.840.1.101.3.2.1.3.13', # id-fpki-common-authentication
+    'REQUIRED_OID'                     => [
+                                            '2.16.840.1.101.3.2.1.3.13',      # id-fpki-common-authentication
+                                            '2.16.840.1.114027.200.3.10.7.6', # id-emspki-nfssp-pivihardware
+                                            '2.16.840.1.101.3.2.1.3.18',      # id-fpki-certpcy-pivihardware
+                                            '2.16.840.1.101.3.2.1.5.7',       # id-treasury-certpcy-medium
+                                            '2.16.840.1.101.3.2.1.5.3',       # id-treasury-certpcybasicindividual
+                                          ],
     'Certificate Authority Repository' => '1.3.6.1.5.5.7.48.5',
     'Certificate Authority Issuers'    => '1.3.6.1.5.5.7.48.2',
     'Certificate Policy'               => '2.5.29.32',
@@ -335,8 +341,8 @@ sub parseCert {
             return();
         }
 
-        # Skip processing certificates that don't have the extension specified in $oid->{'REQUIRED_OID'}
-        if ( hasRequiredPolicy($x509) ) {
+        # Skip processing certificates that don't have an extension specified in the $oid->{'REQUIRED_OID'}[] array
+        if ($extensionData->{'REQUIRED_OID'}){
             print "\t* ", $oid->{'REQUIRED_OID'}, " defined\n" if $DEBUG;
             my $subjectDn = joinX509Subject($x509); # get current cert's subject
             for my $excludedCertData ( @certsToExcludeFromBundle ){
@@ -365,9 +371,12 @@ sub parseExtensions {
         if ( $extension->{'extnID'} eq $oid->{'Subject Information Access'} ){
             print "\t* Found Subject Information Access extension\n" if $DEBUG;
             $extensionInfo->{'sia'} = parseSIAuri($extension);
-        } elsif ( $extension->{'extnID'} eq $oid->{'REQUIRED_OID'} ){
-            print "\t* Found ", $oid->{'REQUIRED_OID'}, " extension\n" if $DEBUG;
-            $extensionInfo->{'commonAuth'} = 1;
+        } elsif ( defined ($oid->{'REQUIRED_OID'}) && ( grep ( $extension->{'extnID'}, @{ $oid->{'REQUIRED_OID'} } ) ) ){
+            print "\t* Found required Policy OID: ", $extension->{'extnID'}, " extension\n" if $DEBUG;
+            $extensionInfo->{'REQUIRED_OID'} = 1;
+        } elsif ( ! defined $oid->{'REQUIRED_OID'} ){
+            # Don't include a required oid check
+            $extensionInfo->{'REQUIRED_OID'} = 1;
         }
     }
     return($extensionInfo);

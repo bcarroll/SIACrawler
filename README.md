@@ -53,3 +53,20 @@ After all certificates have been processed the temporary ca_bundle file is copie
 If the `$delete_temp_files` variable is set to `"yes"`, all files created by this script will be deleted.
 
 **Notice:** To avoid unexpected errors with subsequent runs of this script setting `$delete_temp_files` to `"yes"` is recommended
+
+---
+
+**Utility script**
+# ca_bundle_parser.pl
+Parse a concatenated list of Certificates from a textfile and optionally extract each certificate to a directory
+
+For complete usage details execute ca_bundle_parser.pl with the -h option to view the available command line parameters.
+
+Basic usage:
+```
+ca_bundle_parser.pl -xnf ca_bundle.pem
+```
+The above command does the following:
+    * (-x) Extract each certificate into a directory named *ca_bundle*.pem_certs
+    * (-n) Prepend each extracted certificate file name with a number indicating the order of the cert in the bundle
+    * (-f *FILENAME*) Parse the ca_bundle.pem file

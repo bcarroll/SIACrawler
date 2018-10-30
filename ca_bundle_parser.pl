@@ -200,6 +200,7 @@ sub HelpMessage {
 	print "Certificate attributes that do not exist will not be displayed unless -v or --verbose is specified\n";
 	print "\nThis tool can also be used to parse a regular PEM encoded X.509 Certificate\n\n";
 	print "Available Options:\n";
+	print "-h, -help, -man, -?                Display this page\n";
 	print "--bundle, --file, -f  [FILENAME]   Text file containing Certificate Bundle to read\n";
 	print "--extract [DIRECTORY]              Directory to extract certificates into\n";
 	print "-n                                 Prepend each extracted certificate with a number indicating the order it was found in the bundle file\n";
